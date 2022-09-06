@@ -89,4 +89,14 @@ class Identity
         header('Pragma: no-cache');
         header('Location: '. $this->getAuthorizationUrl($implicit));
     }
+
+    public function handleAuthorizationResponse()
+    {
+        /*
+         * Checking if state is provided, and if it is, it has to match the one we sent with it
+         * If it doesn't, it should be rejected, since the response must come from another source...
+         */
+
+        
+    }
 }
