@@ -2,9 +2,15 @@
 
 namespace Zploited\Identity\Client;
 
+use Zploited\Identity\Client\Traits\SessionState;
+
+/**
+ * Identity Class
+ * Manages the oauth flows as well as preserving the requested authentication.
+ */
 class Identity
 {
-    protected static string $SESSION_STATE_IDENTIFIER = 'identity_state';
+    use SessionState;
 
     /**
      * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[] }
@@ -63,7 +69,7 @@ class Identity
             'client_id' => $this->params['client_id'],
             'redirect_uri' => $this->params['redirect_uri'],
             'scope' => implode(' ', $this->params['scopes']),
-            'state' => $this->setState()
+            'state' => (method_exists($this, 'setState')) ? $this->setState() : null
         ];
 
         return $this->getAuthorizationPath() .'?'. http_build_query($queryParams);
@@ -82,43 +88,5 @@ class Identity
         header('Cache-Control: no-cache');
         header('Pragma: no-cache');
         header('Location: '. $this->getAuthorizationUrl($implicit));
-    }
-
-    /**
-     * Gets the value of the stored state session, or returns null if no state is set.
-     *
-     * @return string
-     */
-    public function getState(): ?string
-    {
-        $this->startSessions();
-
-        return (isset($_SESSION[self::$SESSION_STATE_IDENTIFIER])) ? $_SESSION[self::$SESSION_STATE_IDENTIFIER] : null;
-    }
-
-    /**
-     * Method for making sure php sessions are started and ready to save data.
-     */
-    protected function startSessions(): void
-    {
-        if(session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-    }
-
-    /**
-     * Stores a new session with a random string, used for authorization states.
-     * The generated state is returned
-     *
-     * @return string returns the random string being set as a state
-     */
-    public function setState(): string
-    {
-        $this->startSessions();
-
-        $state = md5(rand());
-        $_SESSION[self::$SESSION_STATE_IDENTIFIER] = $state;
-
-        return $state;
     }
 }
