@@ -4,6 +4,7 @@ namespace Zploited\Identity\Client;
 
 use InvalidArgumentException;
 use Zploited\Identity\Client\Traits\SessionState;
+use Zploited\Identity\Client\Traits\SessionStore;
 
 /**
  * Identity Class
@@ -11,7 +12,7 @@ use Zploited\Identity\Client\Traits\SessionState;
  */
 class Identity
 {
-    use SessionState;
+    use SessionStore, SessionState;
 
     /**
      * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[] }
