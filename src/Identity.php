@@ -2,6 +2,7 @@
 
 namespace Zploited\Identity\Client;
 
+use InvalidArgumentException;
 use Zploited\Identity\Client\Traits\SessionState;
 
 /**
@@ -28,14 +29,14 @@ class Identity
          * Checking if 'identifier' is provided
          */
         if(!isset($params['identifier'])) {
-            throw new \InvalidArgumentException("The identifier parameter is missing.");
+            throw new InvalidArgumentException("The identifier parameter is missing.");
         }
 
         /*
          * Checking if 'client_id' is provided
          */
         if(!isset($params['client_id'])) {
-            throw new \InvalidArgumentException("The client_id parameter is missing.");
+            throw new InvalidArgumentException("The client_id parameter is missing.");
         }
 
         /*
@@ -90,13 +91,35 @@ class Identity
         header('Location: '. $this->getAuthorizationUrl($implicit));
     }
 
+    /**
+     * @throws InvalidArgumentException
+     * @return void
+     */
     public function handleAuthorizationResponse()
     {
         /*
          * Checking if state is provided, and if it is, it has to match the one we sent with it
          * If it doesn't, it should be rejected, since the response must come from another source...
          */
+        if(isset($_GET['state']) && $_GET['state'] !== $this->getState()) {
+            throw new InvalidArgumentException('The state provided does not match our own state.');
+        }
 
-        
+        /*
+         * Next we need to have either a token or a code, depending on what type of authorization we have completed.
+         * Lets check for both, or give an error if none of them exists.
+         */
+        if(isset($_GET['code'])) {
+
+        } elseif (isset($_GET['token'])) {
+
+        } else {
+            throw new InvalidArgumentException('The response should contain either a code or a token.');
+        }
+    }
+
+    protected function handleTokenResponse(string $accessToken, string $expiresIn, string $type = "Bearer", ?string $refreshToken = null, ?string $idToken = null)
+    {
+
     }
 }
