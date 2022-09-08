@@ -2,6 +2,7 @@
 
 namespace Zploited\Identity\Client;
 
+use DateInterval;
 use DateTime;
 use Exception;
 
@@ -45,7 +46,7 @@ class Token
     public function __construct(string $accessToken, int $expiresIn, ?string $refreshToken = null, ?string $idToken = null, string $type = "Bearer")
     {
         $this->accessToken = $accessToken;
-        $this->expires = (new DateTime())->add(new \DateInterval("PT".$expiresIn."S"));
+        $this->expires = (new DateTime())->add(new DateInterval("PT".$expiresIn."S"));
         $this->refreshToken = $refreshToken;
         $this->idToken = $idToken;
         $this->type = $type;
