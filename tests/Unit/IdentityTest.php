@@ -42,7 +42,7 @@ class IdentityTest extends TestCase
         $url = $this->client->getAuthorizationUrl();
 
         $this->assertEquals(
-            'https://tenant.domain.tld/oauth/authorize?response_type=code&client_id=123456&redirect_uri=https%3A%2F%2Fdomain.tld%2Fcallback&scope=&state='. $_SESSION['identity_state'],
+            'https://tenant.domain.tld/oauth/authorize?response_type=code&client_id=123456&redirect_uri=https%3A%2F%2Fdomain.tld%2Fcallback&scope=&state='. unserialize($_SESSION['identity_state']),
             $url
         );
     }
@@ -69,6 +69,6 @@ class IdentityTest extends TestCase
 
         $state = $this->client->getState();
 
-        $this->assertEquals($_SESSION['identity_state'], $state);
+        $this->assertEquals(unserialize($_SESSION['identity_state']), $state);
     }
 }

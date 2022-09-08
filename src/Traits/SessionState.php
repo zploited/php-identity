@@ -4,6 +4,8 @@ namespace Zploited\Identity\Client\Traits;
 
 trait SessionState
 {
+    use SessionStore;
+
     /**
      * @var string name of the session variable used for storing the state value.
      */
@@ -17,10 +19,8 @@ trait SessionState
      */
     public function setState(): string
     {
-        $this->startSessions();
-
         $state = md5(rand());
-        $_SESSION[self::$SESSION_STATE_IDENTIFIER] = $state;
+        $this->setSessionVariable(self::$SESSION_STATE_IDENTIFIER, $state);
 
         return $state;
     }
@@ -32,18 +32,6 @@ trait SessionState
      */
     public function getState(): ?string
     {
-        $this->startSessions();
-
-        return (isset($_SESSION[self::$SESSION_STATE_IDENTIFIER])) ? $_SESSION[self::$SESSION_STATE_IDENTIFIER] : null;
-    }
-
-    /**
-     * Method for making sure php sessions are started and ready to save data.
-     */
-    protected function startSessions(): void
-    {
-        if(session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        return $this->getSessionVariable(self::$SESSION_STATE_IDENTIFIER);
     }
 }
