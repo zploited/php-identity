@@ -2,6 +2,7 @@
 
 namespace Zploited\Identity\Client;
 
+use Exception;
 use InvalidArgumentException;
 use Zploited\Identity\Client\Traits\SessionState;
 use Zploited\Identity\Client\Traits\SessionStore;
@@ -93,8 +94,10 @@ class Identity
     }
 
     /**
-     * @throws InvalidArgumentException
+     * Handles an incoming authorization request callback.
+     *
      * @return void
+     * @throws InvalidArgumentException|Exception
      */
     public function handleAuthorizationResponse()
     {
@@ -111,16 +114,52 @@ class Identity
          * Lets check for both, or give an error if none of them exists.
          */
         if(isset($_GET['code'])) {
+            /*
+             * We are getting an authorization code, so this needs to be traded at the token endpoint for an
+             * access token.
+             */
 
-        } elseif (isset($_GET['token'])) {
+
+        } elseif (isset($_GET['access_token'])) {
+            /*
+             * This is an implicit call, so we are getting the token directly without any authorization codes.
+             */
+            $this->handleTokenResponse(
+                $_GET['access_token'],
+                $_GET['expires_in'],
+                $_GET['token_type'],
+                null,
+                (isset($_GET['id_token'])) ? $_GET['id_token'] : null
+            );
 
         } else {
-            throw new InvalidArgumentException('The response should contain either a code or a token.');
+            /*
+             * We didn't receive either a code, token or error variable...
+             * Something is wrong in this call. The endpoint has probably been called directly in the browser...
+             */
+            throw new InvalidArgumentException('The response should contain either a code, a token or an error.');
         }
     }
 
-    protected function handleTokenResponse(string $accessToken, string $expiresIn, string $type = "Bearer", ?string $refreshToken = null, ?string $idToken = null)
+    /**
+     * Handles a token response, by validating the access token, and returning a token object.
+     *
+     * @param string $accessToken
+     * @param string $expiresIn
+     * @param string $type
+     * @param string|null $refreshToken
+     * @param string|null $idToken
+     * @return Token
+     * @throws Exception
+     */
+    protected function handleTokenResponse(string $accessToken, string $expiresIn, string $type = "Bearer", ?string $refreshToken = null, ?string $idToken = null): Token
     {
-
+        return new Token(
+            $accessToken,
+            $expiresIn,
+            $refreshToken,
+            $idToken,
+            $type
+        );
     }
 }
