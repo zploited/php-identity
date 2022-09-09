@@ -1,5 +1,6 @@
 {
   "name": "zploited/php-identity",
+  "description": "This PHP library is simplifying the authentication flows towards your Identity tenant.",
   "authors": [
     {
       "name": "Dennis Nielsen",
