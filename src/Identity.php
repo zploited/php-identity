@@ -5,7 +5,7 @@ namespace Zploited\Identity\Client;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use InvalidArgumentException;
+use Psr\Http\Message\ResponseInterface;
 use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 use Zploited\Identity\Client\Exceptions\IdentityErrorResponseException;
@@ -24,6 +24,11 @@ class Identity
      * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[] }
      */
     protected array $params;
+
+    /**
+     * @var Client
+     */
+    protected Client $client;
 
     /**
      * Class constructor.
@@ -51,6 +56,15 @@ class Identity
          * Saves the parameters
          */
         $this->params = $params;
+
+        /*
+         * Initiates the Http client
+         */
+        $this->client = new Client([
+            'Cache-Control' => 'no-cache',
+            'Pragma' => 'no-cache',
+            'Accept' => 'application/json'
+        ]);
     }
 
     /**
@@ -110,6 +124,50 @@ class Identity
     }
 
     /**
+     * Initiates a token request using the password grant.
+     *
+     * @param string $email
+     * @param string $password
+     * @return Token
+     * @throws GuzzleException
+     * @throws IdentityCoreException
+     * @throws IdentityErrorResponseException
+     */
+    public function password(string $email, string $password): Token
+    {
+        $response = $this->client->post($this->getTokenEndpointPath(), [
+            'grant_type' => 'password',
+            'client_id' => $this->params['client_id'],
+            'client_secret' => $this->params['client_secret'],
+            'scope' => implode(' ', $this->params['scopes']),
+            'username' => $email,
+            'password' => $password
+        ]);
+
+        return $this->handleGuzzleTokenResponse($response);
+    }
+
+    /**
+     * Initiates a token request using the client credentials grant.
+     *
+     * @return Token
+     * @throws GuzzleException
+     * @throws IdentityCoreException
+     * @throws IdentityErrorResponseException
+     */
+    public function clientCredentials(): Token
+    {
+        $response = $this->client->post($this->getTokenEndpointPath(), [
+            'grant_type' => 'client_credentials',
+            'client_id' => $this->params['client_id'],
+            'client_secret' => $this->params['client_secret'],
+            'scope' => implode(' ', $this->params['scopes'])
+        ]);
+
+        return $this->handleGuzzleTokenResponse($response);
+    }
+
+    /**
      * Handles an incoming authorization request callback.
      *
      * @return Token
@@ -138,13 +196,7 @@ class Identity
              * The client headers dictates that the result should not be cached, and accepts Json
              */
             try {
-                $httpClient = new Client([
-                    'Cache-Control' => 'no-cache',
-                    'Pragma' => 'no-cache',
-                    'Accept' => 'application/json'
-                ]);
-
-                $response = $httpClient->post($this->getTokenEndpointPath(), [
+                $response = $this->client->post($this->getTokenEndpointPath(), [
                     'grant_type' => 'authorization_code',
                     'client_id' => $this->params['client_id'],
                     'client_secret' => $this->params['client_secret'],
@@ -155,36 +207,7 @@ class Identity
                 throw new IdentityCoreException($exception->getMessage(), $exception->getCode());   // wrapping the GuzzleException into a IdentityCoreException
             }
 
-            /*
-             * If we receive a status code of 200 everything should be fine, and we can start processing the data we get back into a token.
-             * If not, well... the something obviously didn't go the way we expected, and should trigger an exception
-             *
-             * A status code of 200 doesn't necessarily mean that everything is peachy though, it just means that the server didn't make any server errors.
-             * We still need to check if the call itself was successful, or returned an error in form of json.
-             */
-            if($response->getStatusCode() === 200) {
-                $responseData = json_decode($response->getBody()->getContents());
-
-                /*
-                 * Catching if the response was an error response
-                 */
-                if(isset($responseData['error'])) {
-                    throw new IdentityErrorResponseException($responseData['error']);
-                }
-
-                /*
-                 * If not, we continue to process the response into a token
-                 */
-                return $this->handleTokenResponse(
-                    $responseData['access_token'],
-                    $responseData['expires_in'],
-                    $responseData['token_type'],
-                    $responseData['refresh_token'],
-                    (isset($responseData['id_token'])) ? $responseData['id_token'] : null
-                );
-            } else {
-                throw new IdentityCoreException($response->getBody()->getContents());
-            }
+            return $this->handleGuzzleTokenResponse($response);
 
         } elseif (isset($_GET['access_token'])) {
             /*
@@ -204,6 +227,41 @@ class Identity
              * Something is wrong in this call. The endpoint has probably been called directly in the browser...
              */
             throw new IdentityArgumentException('The response should contain either a code, a token or an error.');
+        }
+    }
+
+    /**
+     * Handles the Guzzle response for an token endpoint call.
+     *
+     * @param ResponseInterface $response
+     * @return Token
+     * @throws IdentityCoreException
+     * @throws IdentityErrorResponseException
+     */
+    protected function handleGuzzleTokenResponse(ResponseInterface $response): Token
+    {
+        if($response->getStatusCode() === 200) {
+            $responseData = json_decode($response->getBody()->getContents());
+
+            /*
+             * Catching if the response was an error response
+             */
+            if(isset($responseData['error'])) {
+                throw new IdentityErrorResponseException($responseData['error']);
+            }
+
+            /*
+             * If not, we continue to process the response into a token
+             */
+            return $this->handleTokenResponse(
+                $responseData['access_token'],
+                $responseData['expires_in'],
+                $responseData['token_type'],
+                $responseData['refresh_token'],
+                (isset($responseData['id_token'])) ? $responseData['id_token'] : null
+            );
+        } else {
+            throw new IdentityCoreException($response->getBody()->getContents());
         }
     }
 
