@@ -45,6 +45,9 @@ class Token
      */
     public function __construct(string $accessToken, int $expiresIn, ?string $refreshToken = null, ?string $idToken = null, string $type = "Bearer")
     {
+        /*
+         * Saves the parameters locally for later
+         */
         $this->accessToken = $accessToken;
         $this->expires = (new DateTime())->add(new DateInterval("PT".$expiresIn."S"));
         $this->refreshToken = $refreshToken;
@@ -95,7 +98,7 @@ class Token
 
     /**
      * Gets the id token.
-     * 
+     *
      * @return string|null
      */
     public function getIdToken(): ?string
