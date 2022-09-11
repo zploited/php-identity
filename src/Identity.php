@@ -4,7 +4,9 @@ namespace Zploited\Identity\Client;
 
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\ServerException;
 use Psr\Http\Message\ResponseInterface;
 use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
@@ -203,8 +205,12 @@ class Identity
                     'redirect_uri' => $this->params['redirect_uri'],
                     'code' => $_GET['code']
                 ]);
-            } catch (GuzzleException $exception) {
-                throw new IdentityCoreException($exception->getMessage(), $exception->getCode());   // wrapping the GuzzleException into a IdentityCoreException
+            } catch (ClientException $clientException) {
+                $errors = json_decode($clientException->getResponse()->getBody()->getContents());
+
+                throw new IdentityErrorResponseException($errors['error'], $errors['error_description'], $errors['hint'], $errors['message']);
+            } catch (ServerException $serverException) {
+                throw new IdentityCoreException($serverException->getResponse()->getBody()->getContents());
             }
 
             return $this->handleGuzzleTokenResponse($response);
@@ -240,15 +246,8 @@ class Identity
      */
     protected function handleGuzzleTokenResponse(ResponseInterface $response): Token
     {
-        if($response->getStatusCode() === 200) {
-            $responseData = json_decode($response->getBody()->getContents());
 
-            /*
-             * Catching if the response was an error response
-             */
-            if(isset($responseData['error'])) {
-                throw new IdentityErrorResponseException($responseData['error']);
-            }
+            $responseData = json_decode($response->getBody()->getContents());
 
             /*
              * If not, we continue to process the response into a token
@@ -260,9 +259,6 @@ class Identity
                 $responseData['refresh_token'],
                 (isset($responseData['id_token'])) ? $responseData['id_token'] : null
             );
-        } else {
-            throw new IdentityCoreException($response->getBody()->getContents());
-        }
     }
 
     /**
