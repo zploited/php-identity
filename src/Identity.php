@@ -203,7 +203,7 @@ class Identity
                     'client_id' => $this->params['client_id'],
                     'client_secret' => $this->params['client_secret'],
                     'redirect_uri' => $this->params['redirect_uri'],
-                    'code' => $_GET['code']
+                    'code' => urldecode($_GET['code'])
                 ]);
             } catch (ClientException $clientException) {
                 $response = json_decode($clientException->getResponse()->getBody()->getContents());
