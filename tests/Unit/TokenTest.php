@@ -11,7 +11,7 @@ class TokenTest extends TestCase
 
     public function testGetToken()
     {
-        $this->assertEquals('testtoken', $this->token->getAccessToken());
+        $this->assertEquals('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.2gSBz9EOsQRN9I-3iSxJoFt7NtgV6Rm0IL6a8CAwl3Q', $this->token->getAccessToken());
     }
 
     public function testExpiresAt()
@@ -40,7 +40,7 @@ class TokenTest extends TestCase
         parent::setUp();
 
         $this->token = new Token(
-            'testtoken',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.2gSBz9EOsQRN9I-3iSxJoFt7NtgV6Rm0IL6a8CAwl3Q',
             3600,
             'testrefresh'
         );

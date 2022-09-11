@@ -34,6 +34,16 @@ class Token
     protected ?string $idToken;
 
     /**
+     * @var JwtTokenHandler
+     */
+    protected JwtTokenHandler $accessTokenHandler;
+
+    /**
+     * @var JwtTokenHandler|null
+     */
+    protected ?JwtTokenHandler $idTokenHandler;
+
+    /**
      * Class constructor.
      *
      * @param string $accessToken access token.
@@ -53,6 +63,9 @@ class Token
         $this->refreshToken = $refreshToken;
         $this->idToken = $idToken;
         $this->type = $type;
+
+        $this->accessTokenHandler = new JwtTokenHandler($accessToken);
+        $this->idTokenHandler = ($idToken) ? new JwtTokenHandler($idToken) : null;
     }
 
     /**
@@ -104,5 +117,10 @@ class Token
     public function getIdToken(): ?string
     {
         return $this->idToken;
+    }
+
+    public function accessToken(): JwtTokenHandler
+    {
+        return $this->accessTokenHandler;
     }
 }
