@@ -92,4 +92,14 @@ class Token
     {
         return $this->refreshToken;
     }
+
+    /**
+     * Gets the id token.
+     * 
+     * @return string|null
+     */
+    public function getIdToken(): ?string
+    {
+        return $this->idToken;
+    }
 }
