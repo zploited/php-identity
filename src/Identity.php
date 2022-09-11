@@ -206,9 +206,9 @@ class Identity
                     'code' => $_GET['code']
                 ]);
             } catch (ClientException $clientException) {
-                $errors = json_decode($clientException->getResponse()->getBody()->getContents());
+                $response = json_decode($clientException->getResponse()->getBody()->getContents());
 
-                throw new IdentityErrorResponseException($errors['error'], $errors['error_description'], $errors['hint'], $errors['message']);
+                throw new IdentityErrorResponseException($response->error, $response->error_description, $response->hint, $response->message);
             } catch (ServerException $serverException) {
                 throw new IdentityCoreException($serverException->getResponse()->getBody()->getContents());
             }
@@ -237,7 +237,7 @@ class Identity
     }
 
     /**
-     * Handles the Guzzle response for an token endpoint call.
+     * Handles the Guzzle response for a token endpoint call.
      *
      * @param ResponseInterface $response
      * @return Token
@@ -253,10 +253,10 @@ class Identity
              * If not, we continue to process the response into a token
              */
             return $this->handleTokenResponse(
-                $responseData['access_token'],
-                $responseData['expires_in'],
-                $responseData['token_type'],
-                $responseData['refresh_token'],
+                $responseData->access_token,
+                $responseData->expires_in,
+                $responseData->token_type,
+                $responseData->refresh_token,
                 (isset($responseData['id_token'])) ? $responseData['id_token'] : null
             );
     }
