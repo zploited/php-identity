@@ -123,4 +123,9 @@ class Token
     {
         return $this->accessTokenHandler;
     }
+
+    public function idToken(): ?JwtTokenHandler
+    {
+        return $this->idTokenHandler;
+    }
 }
