@@ -129,12 +129,12 @@ class Identity
      *
      * @param string $email
      * @param string $password
-     * @return Token
+     * @return TokenResponse
      * @throws GuzzleException
      * @throws IdentityCoreException
      * @throws IdentityErrorResponseException
      */
-    public function password(string $email, string $password): Token
+    public function password(string $email, string $password): TokenResponse
     {
         $response = $this->client->post($this->getTokenEndpointPath(), [
             'grant_type' => 'password',
@@ -151,12 +151,12 @@ class Identity
     /**
      * Initiates a token request using the client credentials grant.
      *
-     * @return Token
+     * @return TokenResponse
      * @throws GuzzleException
      * @throws IdentityCoreException
      * @throws IdentityErrorResponseException
      */
-    public function clientCredentials(): Token
+    public function clientCredentials(): TokenResponse
     {
         $response = $this->client->post($this->getTokenEndpointPath(), [
             'grant_type' => 'client_credentials',
@@ -171,12 +171,12 @@ class Identity
     /**
      * Handles an incoming authorization request callback.
      *
-     * @return Token
+     * @return TokenResponse
      * @throws IdentityArgumentException
      * @throws IdentityCoreException
-     * @throws IdentityErrorResponseException
+     * @throws IdentityErrorResponseException|GuzzleException
      */
-    public function handleAuthorizationResponse(): Token
+    public function handleAuthorizationResponse(): TokenResponse
     {
         /*
          * Checking if state is provided, and if it is, it has to match the one we sent with it
@@ -241,11 +241,11 @@ class Identity
      * Handles the Guzzle response for a token endpoint call.
      *
      * @param ResponseInterface $response
-     * @return Token
+     * @return TokenResponse
      * @throws IdentityCoreException
      * @throws IdentityErrorResponseException
      */
-    protected function handleGuzzleTokenResponse(ResponseInterface $response): Token
+    protected function handleGuzzleTokenResponse(ResponseInterface $response): TokenResponse
     {
 
             $responseData = json_decode($response->getBody()->getContents());
@@ -270,13 +270,13 @@ class Identity
      * @param string $type
      * @param string|null $refreshToken
      * @param string|null $idToken
-     * @return Token
+     * @return TokenResponse
      * @throws IdentityCoreException
      */
-    protected function handleTokenResponse(string $accessToken, string $expiresIn, string $type = "Bearer", ?string $refreshToken = null, ?string $idToken = null): Token
+    protected function handleTokenResponse(string $accessToken, string $expiresIn, string $type = "Bearer", ?string $refreshToken = null, ?string $idToken = null): TokenResponse
     {
         try {
-            return new Token(
+            return new TokenResponse(
                 $accessToken,
                 $expiresIn,
                 $refreshToken,

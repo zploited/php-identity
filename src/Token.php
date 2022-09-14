@@ -2,130 +2,69 @@
 
 namespace Zploited\Identity\Client;
 
-use DateInterval;
-use DateTime;
-use Exception;
+use Lcobucci\JWT\Encoding\CannotDecodeContent;
+use Lcobucci\JWT\Encoding\JoseEncoder;
+use Lcobucci\JWT\Token\InvalidTokenStructure;
+use Lcobucci\JWT\Token\Parser;
+use Lcobucci\JWT\Token\UnsupportedHeaderFound;
+use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 
+/**
+ * Simplifies the use of a jwt
+ */
 class Token
 {
-    /**
-     * @var string token for granting api access.
-     */
-    protected string $accessToken;
+    protected \Lcobucci\JWT\Token $token;
+    protected string $jwt;
 
     /**
-     * @var DateTime when the access token expires.
+     * @throws IdentityCoreException
      */
-    protected DateTime $expires;
+    public function __construct(string $jwt)
+    {
+        $this->jwt = $jwt;
+
+        $parser = new Parser(new JoseEncoder());
+
+        try {
+
+            $this->token = $parser->parse($jwt);
+
+        } catch (CannotDecodeContent | InvalidTokenStructure | UnsupportedHeaderFound $e) {
+
+            throw new IdentityCoreException($e->getMessage(), $e->getCode());
+
+        }
+    }
 
     /**
-     * @var string type of token
-     */
-    protected string $type;
-
-    /**
-     * @var string|null token for retrieving a new access token, when the current expires.
-     */
-    protected ?string $refreshToken;
-
-    /**
-     * @var string|null stringified jwt token containing user information
-     */
-    protected ?string $idToken;
-
-    /**
-     * @var JwtTokenHandler
-     */
-    protected JwtTokenHandler $accessTokenHandler;
-
-    /**
-     * @var JwtTokenHandler|null
-     */
-    protected ?JwtTokenHandler $idTokenHandler;
-
-    /**
-     * Class constructor.
+     * Returns the value of a claim with the same name as the property.
+     * If the claim does not exist, it returns null
      *
-     * @param string $accessToken access token.
-     * @param int $expiresIn time in seconds until the access token is no longer valid.
-     * @param string $type type of token. this is typically always a bearer token.
-     * @param string|null $refreshToken token for automatically getting a new access token, without having to authorize again.
-     * @param string|null $idToken id token is provided if openid scope is being used, and is a jwt containing information about the user.
-     * @throws Exception
+     * @param $property
+     * @return mixed|null
      */
-    public function __construct(string $accessToken, int $expiresIn, ?string $refreshToken = null, ?string $idToken = null, string $type = "Bearer")
+    public function __get($property)
     {
-        /*
-         * Saves the parameters locally for later
-         */
-        $this->accessToken = $accessToken;
-        $this->expires = (new DateTime())->add(new DateInterval("PT".$expiresIn."S"));
-        $this->refreshToken = $refreshToken;
-        $this->idToken = $idToken;
-        $this->type = $type;
+        try {
 
-        $this->accessTokenHandler = new JwtTokenHandler($accessToken);
-        $this->idTokenHandler = ($idToken) ? new JwtTokenHandler($idToken) : null;
+            return $this->token->claims()->get($property);
+
+        } catch (\Exception $e) {
+
+            return null;
+
+        }
     }
 
     /**
-     * Gets the access token.
+     * Setter for making sure no properties are written to the object.
      *
-     * @return string
+     * @param $property
+     * @param $value
+     * @return void
      */
-    public function getAccessToken(): string
+    public function __set($property, $value): void
     {
-        return $this->accessToken;
-    }
-
-    /**
-     * Gets the time when the access token expires in DateTime format
-     *
-     * @return DateTime
-     */
-    public function expiresAt(): DateTime
-    {
-        return $this->expires;
-    }
-
-    /**
-     * Ges the time in seconds until the access token expires.
-     * A negative result means the token is expired, and shows the number of seconds since it expired.
-     *
-     * @return int
-     */
-    public function expiresIn(): int
-    {
-        return $this->expires->getTimestamp() - (new DateTime())->getTimestamp();
-    }
-
-    /**
-     * Gets the saved refresh token
-     *
-     * @return string|null
-     */
-    public function getRefreshToken(): ?string
-    {
-        return $this->refreshToken;
-    }
-
-    /**
-     * Gets the id token.
-     *
-     * @return string|null
-     */
-    public function getIdToken(): ?string
-    {
-        return $this->idToken;
-    }
-
-    public function accessToken(): JwtTokenHandler
-    {
-        return $this->accessTokenHandler;
-    }
-
-    public function idToken(): ?JwtTokenHandler
-    {
-        return $this->idTokenHandler;
     }
 }
