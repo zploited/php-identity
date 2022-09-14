@@ -67,4 +67,9 @@ class Token
     public function __set($property, $value): void
     {
     }
+
+    public function getJwtString(): string
+    {
+        return $this->jwt;
+    }
 }
