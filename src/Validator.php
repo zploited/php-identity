@@ -3,10 +3,14 @@
 namespace Zploited\Identity\Client;
 
 
+use Lcobucci\Clock\SystemClock;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
+use Lcobucci\JWT\Validation\Constraint\IssuedBy;
+use Lcobucci\JWT\Validation\Constraint\PermittedFor;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
+use Lcobucci\JWT\Validation\Constraint\ValidAt;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 use Zploited\Identity\Client\Exceptions\IdentityValidationException;
 use Zploited\Identity\Client\Interfaces\TokenInterface;
@@ -64,16 +68,46 @@ class Validator
         /*
          * Next, lets make sure the token is signed with our public key
          */
-        if(!$config->validator()
-            ->validate( $token->getJwtToken(),
-                new SignedWith(
-                    $config->signer(),
-                    $config->verificationKey()
-                )
+        if(!$config->validator()->validate(
+            $token->getJwtToken(),
+            new SignedWith(
+                $config->signer(),
+                $config->verificationKey()
             )
-        )
+        ))
         {
-            throw new IdentityValidationException('Invalid token signature');
+            throw new IdentityValidationException('Invalid token signature.');
+        }
+
+        /*
+         * Checking if the token is expired or used before it is valid (nbf)
+         */
+        if(!$config->validator()->validate(
+            $token->getJwtToken(),
+            new ValidAt(SystemClock::fromUTC())
+        ))
+        {
+            throw new IdentityValidationException('The token has expired, or is not yet valid.');
+        }
+
+        /*
+         * Checking if the token is issued by the correct issuer.
+         */
+        if(!$config->validator()->validate(
+            $token->getJwtToken(),
+            new IssuedBy($this->issuer)
+        )) {
+            throw new IdentityValidationException('Incorrect issuing service.');
+        }
+
+        /*
+         * Checking if the token is allowed for this client
+         */
+        if(!$config->validator()->validate(
+            $token->getJwtToken(),
+            new PermittedFor($this->clientId)
+        )) {
+            throw new IdentityValidationException('The token is not permitted for this client.');
         }
 
         /*
