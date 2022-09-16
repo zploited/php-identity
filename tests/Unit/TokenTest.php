@@ -1,6 +1,6 @@
 <?php
 
-namespace Unit;
+namespace Zploited\Identity\Client\Tests\Unit;
 
 use Zploited\Identity\Client\Token;
 use Zploited\Identity\Client\Tests\TestCase;
