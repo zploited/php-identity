@@ -93,13 +93,14 @@ class Validator
         /*
          * Checking if the token is issued by the correct issuer.
          */
+        /*
         if(!$config->validator()->validate(
             $token->getJwtToken(),
             new IssuedBy($this->issuer)
         )) {
             throw new IdentityValidationException('Incorrect issuing service.');
         }
-
+        */
         /*
          * Checking if the token is allowed for this client
          */
