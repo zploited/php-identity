@@ -53,4 +53,17 @@ trait SessionStore
 
         unset($_SESSION[$variable]);
     }
+
+    /**
+     * Checks if a specific session variable exists.
+     *
+     * @param string $valriable
+     * @return bool
+     */
+    protected function hasSessionVariable(string $valriable): bool
+    {
+        $this->startSessions();
+
+        return isset($_SESSION[$valriable]);
+    }
 }
