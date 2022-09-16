@@ -22,7 +22,7 @@ class Jwks
         if (!$this->hasSessionVariable('identity.jwks')) {
             $jwks = $this->jwksFromEndpoint();
 
-            $this->setSessionVariable($jwks);
+            $this->setSessionVariable('identity.jwks', $jwks);
         } else {
             $jwks = $this->getSessionVariable('identity.jwks');
         }
