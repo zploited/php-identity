@@ -8,11 +8,12 @@ use Lcobucci\JWT\Token\InvalidTokenStructure;
 use Lcobucci\JWT\Token\Parser;
 use Lcobucci\JWT\Token\UnsupportedHeaderFound;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
+use Zploited\Identity\Client\Interfaces\TokenInterface;
 
 /**
  * Simplifies the use of a jwt
  */
-class Token
+class Token implements TokenInterface
 {
     protected \Lcobucci\JWT\Token $token;
     protected string $jwt;
@@ -71,5 +72,17 @@ class Token
     public function getJwtString(): string
     {
         return $this->jwt;
+    }
+
+    public function getJwtToken(): \Lcobucci\JWT\Token
+    {
+        return $this->token;
+    }
+
+    public function getHeader(string $header)
+    {
+        return $this->token
+            ->headers()
+            ->get($header);
     }
 }
