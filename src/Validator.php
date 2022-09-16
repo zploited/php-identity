@@ -8,7 +8,6 @@ use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Validation\Constraint\IssuedBy;
-use Lcobucci\JWT\Validation\Constraint\PermittedFor;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
 use Lcobucci\JWT\Validation\Constraint\ValidAt;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
@@ -19,15 +18,13 @@ use Zploited\Identity\Client\Libs\Jwks;
 class Validator
 {
     protected string $issuer;
-    protected string $clientId;
     protected ?string $publicKeyPath;
 
     protected Jwks $jwks;
 
-    public function __construct(string $issuer, string $clientId, ?string $publicKeyPath = null)
+    public function __construct(string $issuer, ?string $publicKeyPath = null)
     {
         $this->issuer = $issuer;
-        $this->clientId = $clientId;
         $this->publicKeyPath = $publicKeyPath;
 
         $this->jwks = new Jwks($issuer);
@@ -66,6 +63,14 @@ class Validator
         }
 
         /*
+         * Then lets check if the token has at+jwt as TYP header.
+         * This indicates that this is an access token...
+         */
+        if(strtolower($token->getHeader('typ')) !== 'at+jwt') {
+            throw new IdentityValidationException('This is not an access token.');
+        }
+
+        /*
          * Next, lets make sure the token is signed with our public key
          */
         if(!$config->validator()->validate(
@@ -93,22 +98,11 @@ class Validator
         /*
          * Checking if the token is issued by the correct issuer.
          */
-        /*
         if(!$config->validator()->validate(
             $token->getJwtToken(),
             new IssuedBy($this->issuer)
         )) {
             throw new IdentityValidationException('Incorrect issuing service.');
-        }
-        */
-        /*
-         * Checking if the token is allowed for this client
-         */
-        if(!$config->validator()->validate(
-            $token->getJwtToken(),
-            new PermittedFor($this->clientId)
-        )) {
-            throw new IdentityValidationException('The token is not permitted for this client.');
         }
 
         /*
