@@ -24,7 +24,7 @@ class ApiClient
          * Prepares the Guzzle client with the required headers and the base uri.
          */
         $this->client = new Client([
-            'base_uri' => 'https://'.$identifier.'/api/v1',
+            'base_uri' => 'https://'.$identifier.'/api/v1/',
             'headers' => [
                 'accept' => 'application/json',
                 'cache-control' => 'no-store',
