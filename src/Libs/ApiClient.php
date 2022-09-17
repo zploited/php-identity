@@ -28,7 +28,7 @@ class ApiClient
             'headers' => [
                 'accept' => 'application/json',
                 'cache-control' => 'no-store',
-                'authorization' => 'bearer '.$token->getJwtString(),
+                'authorization' => 'Bearer '.$token->getJwtString(),
                 'user-agent' => 'identity/'.$version
             ]
         ]);
