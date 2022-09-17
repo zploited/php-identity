@@ -18,6 +18,8 @@ class ApiClient
      */
     public function __construct(string $identifier, TokenInterface $token)
     {
+        $version = require(__DIR__.'/../version.php');
+
         /*
          * Prepares the Guzzle client with the required headers and the base uri.
          */
@@ -26,7 +28,8 @@ class ApiClient
             'headers' => [
                 'accept' => 'application/json',
                 'cache-control' => 'no-store',
-                'authorization' => 'bearer '.$token->getJwtString()
+                'authorization' => 'bearer '.$token->getJwtString(),
+                'user-agent' => 'identity/'.$version
             ]
         ]);
     }
