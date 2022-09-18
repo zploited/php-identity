@@ -68,4 +68,14 @@ class ApiClient
             }
         };
     }
+
+    /**
+     * Gets the configured client raw Guzzle client.
+     *
+     * @return Client
+     */
+    public function client(): Client
+    {
+        return $this->client;
+    }
 }
