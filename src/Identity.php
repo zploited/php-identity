@@ -11,6 +11,7 @@ use Psr\Http\Message\ResponseInterface;
 use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 use Zploited\Identity\Client\Exceptions\IdentityErrorResponseException;
+use Zploited\Identity\Client\Libs\ApiClient;
 use Zploited\Identity\Client\Traits\SessionState;
 use Zploited\Identity\Client\Traits\SessionStore;
 
@@ -23,7 +24,7 @@ class Identity
     use SessionStore, SessionState;
 
     /**
-     * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[] }
+     * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[], persist_tokens: bool }
      */
     protected array $params;
 
@@ -54,6 +55,10 @@ class Identity
             throw new IdentityArgumentException("The client_id parameter is missing.");
         }
 
+        if(!isset($params['persist_tokens'])) {
+            $params['persist_tokens'] = true;
+        }
+
         /*
          * Saves the parameters
          */
@@ -66,6 +71,36 @@ class Identity
             'Cache-Control' => 'no-cache',
             'Pragma' => 'no-cache'
         ]);
+    }
+
+    /**
+     * Gets the saved access token.
+     *
+     * @return Token|null
+     */
+    public function accessToken(): ?Token
+    {
+        return $this->loadToken('access');
+    }
+
+    /**
+     * Gets the saved ID token.
+     *
+     * @return Token|null
+     */
+    public function idToken(): ?Token
+    {
+        return $this->loadToken('id');
+    }
+
+    /**
+     * Gets the saved refresh token.
+     *
+     * @return Token|null
+     */
+    protected function refreshToken(): ?Token
+    {
+        return $this->loadToken('refresh');
     }
 
     /**
@@ -214,13 +249,13 @@ class Identity
                 throw new IdentityCoreException($serverException->getResponse()->getBody()->getContents());
             }
 
-            return $this->handleGuzzleTokenResponse($response);
+            $tokenResponse = $this->handleGuzzleTokenResponse($response);
 
         } elseif (isset($_GET['access_token'])) {
             /*
              * This is an implicit call, so we are getting the token directly without any authorization codes.
              */
-            return $this->handleTokenResponse(
+            $tokenResponse = $this->handleTokenResponse(
                 $_GET['access_token'],
                 $_GET['expires_in'],
                 $_GET['token_type'],
@@ -235,6 +270,25 @@ class Identity
              */
             throw new IdentityArgumentException('The response should contain either a code, a token or an error.');
         }
+
+        /*
+         * saves the tokens locally before returning the response.
+         */
+        $this->saveToken('access', $tokenResponse->getAccessToken());
+        $this->saveToken('id', $tokenResponse->getIdToken());
+        $this->saveToken('refresh', $tokenResponse->getRefreshToken());
+
+        return $tokenResponse;
+    }
+
+    /**
+     * Gets the api handler for this identity.
+     *
+     * @return ApiClient
+     */
+    public function api(): ApiClient
+    {
+        return new ApiClient($this->params['identifier'], $this->accessToken());
     }
 
     /**
@@ -247,19 +301,18 @@ class Identity
      */
     protected function handleGuzzleTokenResponse(ResponseInterface $response): TokenResponse
     {
+        $responseData = json_decode($response->getBody()->getContents());
 
-            $responseData = json_decode($response->getBody()->getContents());
-
-            /*
-             * If not, we continue to process the response into a token
-             */
-            return $this->handleTokenResponse(
-                $responseData->access_token,
-                $responseData->expires_in,
-                $responseData->token_type,
-                $responseData->refresh_token,
-                (isset($responseData->id_token)) ? $responseData->id_token : null
-            );
+        /*
+         * If not, we continue to process the response into a token
+         */
+        return $this->handleTokenResponse(
+            $responseData->access_token,
+            $responseData->expires_in,
+            $responseData->token_type,
+            $responseData->refresh_token,
+            (isset($responseData->id_token)) ? $responseData->id_token : null
+        );
     }
 
     /**
@@ -286,5 +339,21 @@ class Identity
         } catch (Exception $exception) {
             throw new IdentityCoreException($exception->getMessage(), $exception->getCode());
         }
+    }
+
+    protected function saveToken(string $type, string $token): void
+    {
+        if($this->params['persist_tokens']) {
+            $this->setSessionVariable($this->params['identifier'].'.'.$type, $token);
+        }
+    }
+
+    protected function loadToken(string $type): ?Token
+    {
+        if($this->params['persist_tokens']) {
+            return new Token($this->getSessionVariable($this->params['identifier'].'.'.$type));
+        }
+
+        return null;
     }
 }
