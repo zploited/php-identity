@@ -19,6 +19,7 @@ abstract class ApiEndpoint
     public function __construct(Client $client, string $resource)
     {
         $this->client = $client;
+        $this->resource = $resource;
     }
 
     /**
@@ -28,7 +29,7 @@ abstract class ApiEndpoint
      * @return mixed
      * @throws GuzzleException
      */
-    public function get(string $path)
+    protected function get(string $path)
     {
         $response =  $this->client->get($path);
 
@@ -43,7 +44,7 @@ abstract class ApiEndpoint
      * @return void
      * @throws GuzzleException
      */
-    public function post(string $path, array $data): void
+    protected function post(string $path, array $data): void
     {
         $this->client->post($path, $data);
     }
@@ -55,7 +56,7 @@ abstract class ApiEndpoint
      * @return void
      * @throws GuzzleException
      */
-    public function delete(string $path): void
+    protected function delete(string $path): void
     {
         $this->client->delete($path);
     }
@@ -68,7 +69,7 @@ abstract class ApiEndpoint
      * @return void
      * @throws GuzzleException
      */
-    public function patch(string $path, array $data)
+    protected function patch(string $path, array $data)
     {
         $this->client->patch($path, $data);
     }
