@@ -2,11 +2,14 @@
 
 namespace Zploited\Identity\Client;
 
+use Lcobucci\Clock\SystemClock;
+use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Encoding\CannotDecodeContent;
 use Lcobucci\JWT\Encoding\JoseEncoder;
 use Lcobucci\JWT\Token\InvalidTokenStructure;
 use Lcobucci\JWT\Token\Parser;
 use Lcobucci\JWT\Token\UnsupportedHeaderFound;
+use Lcobucci\JWT\Validation\Constraint\ValidAt;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 use Zploited\Identity\Client\Interfaces\TokenInterface;
 
@@ -84,5 +87,15 @@ class Token implements TokenInterface
         return $this->token
             ->headers()
             ->get($header);
+    }
+
+    public function isExpired(): bool
+    {
+        $config = Configuration::forUnsecuredSigner();
+
+        return !$config->validator()->validate(
+            $this->token,
+            new ValidAt(SystemClock::fromUTC())
+        );
     }
 }
