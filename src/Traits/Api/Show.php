@@ -10,7 +10,7 @@ trait Show
      * @param $id
      * @return object
      */
-    protected function show($id): object
+    public function show($id): object
     {
         $response = $this->get($this->resource.'/'.$id);
 

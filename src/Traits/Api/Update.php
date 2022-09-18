@@ -11,7 +11,7 @@ trait Update
      * @param array $data data being updated
      * @return void
      */
-    protected function update($id, array $data): void
+    public function update($id, array $data): void
     {
         $this->patch($this->resource.'/'.$id);
     }

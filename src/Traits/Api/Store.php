@@ -10,7 +10,7 @@ trait Store
      * @param array $params The data being saved to the new entity.
      * @return void
      */
-    protected function store(array $params): void
+    public function store(array $params): void
     {
         $this->post($this->resource, $params);
     }

@@ -9,7 +9,7 @@ trait Index
      *
      * @return object
      */
-    protected function index(): object
+    public function index(): object
     {
         $response = $this->get($this->resource);
 
