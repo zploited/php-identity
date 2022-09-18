@@ -2,16 +2,17 @@
 
 namespace Zploited\Identity\Client\Traits\Api;
 
-trait Index
+trait Show
 {
     /**
-     * Gets a list of all stored entities.
+     * Gets a specific entity.
      *
+     * @param $id
      * @return object
      */
-    protected function index(): object
+    protected function show($id): object
     {
-        $response = $this->get($this->resource);
+        $response = $this->get($this->resource.'/'.$id);
 
         return json_decode($response->getBody()->getContents());
     }

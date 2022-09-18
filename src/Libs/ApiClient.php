@@ -3,8 +3,11 @@
 namespace Zploited\Identity\Client\Libs;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Zploited\Identity\Client\Interfaces\TokenInterface;
+use Zploited\Identity\Client\Traits\Api\Index;
+use Zploited\Identity\Client\Traits\Api\Show;
+use Zploited\Identity\Client\Traits\Api\Store;
+use Zploited\Identity\Client\Traits\Api\Update;
 
 class ApiClient
 {
@@ -34,55 +37,25 @@ class ApiClient
         ]);
     }
 
-    /**
-     * Requests api path using a GET request.
-     *
-     * @param string $path
-     * @return mixed
-     * @throws GuzzleException
-     */
-    public function get(string $path)
+    public function users(): object
     {
-        $response =  $this->client->get($path);
-
-        return json_decode($response->getBody()->getContents());
+        /**
+         * Handles user specific api resources
+         */
+        return new class($this->client, 'users') extends ApiEndpoint
+        {
+            use Index, Show, Store, Update;
+        };
     }
 
-    /**
-     * Requests api path using a POST request.
-     *
-     * @param string $path
-     * @param array $data
-     * @return void
-     * @throws GuzzleException
-     */
-    public function post(string $path, array $data): void
+    public function endpoint(string $resource): object
     {
-        $this->client->post($path, $data);
-    }
-
-    /**
-     * Requests api path using a DELETE request.
-     *
-     * @param string $path
-     * @return void
-     * @throws GuzzleException
-     */
-    public function delete(string $path): void
-    {
-        $this->client->delete($path);
-    }
-
-    /**
-     * Requests api path using a PATCH request.
-     *
-     * @param string $path
-     * @param array $data
-     * @return void
-     * @throws GuzzleException
-     */
-    public function patch(string $path, array $data)
-    {
-        $this->client->patch($path, $data);
+        /**
+         * handles a custom defined api endpoint
+         */
+        return new class($this->client, $resource) extends ApiEndpoint
+        {
+            use Index, Show, Store, Update;
+        };
     }
 }
