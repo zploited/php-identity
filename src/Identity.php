@@ -73,35 +73,12 @@ class Identity
         ]);
     }
 
-    /**
-     * Gets the saved access token.
-     *
-     * @return Token|null
+    /* |-----------------------------------------------------------------------------------
+     * | ENDPOINT NAVIGATION HELPER METHODS
+     * |-----------------------------------------------------------------------------------
+     * | These methods helps other methods by translating the identifier into usable
+     * | endpoint URLs
      */
-    public function accessToken(): ?Token
-    {
-        return $this->loadToken('access');
-    }
-
-    /**
-     * Gets the saved ID token.
-     *
-     * @return Token|null
-     */
-    public function idToken(): ?Token
-    {
-        return $this->loadToken('id');
-    }
-
-    /**
-     * Gets the saved refresh token.
-     *
-     * @return Token|null
-     */
-    protected function refreshToken(): ?Token
-    {
-        return $this->loadToken('refresh');
-    }
 
     /**
      * Gets the URL path of where the authorization endpoint is located.
@@ -123,6 +100,14 @@ class Identity
     {
         return 'https://' . $this->params['identifier'] . '/oauth/token';
     }
+
+
+    /* |-----------------------------------------------------------------------------------
+     * | AUTHORIZATION METHODS
+     * |-----------------------------------------------------------------------------------
+     * | These methods handles the authorization flow. These are the standard oauth grants
+     * | often used online.
+     */
 
     /**
      * Gets the full url used for initiating an authorization flow, which is a combination of the authorization path,
@@ -157,50 +142,6 @@ class Identity
         header('Cache-Control: no-cache');
         header('Pragma: no-cache');
         header('Location: '. $this->getAuthorizationUrl($implicit));
-    }
-
-    /**
-     * Initiates a token request using the password grant.
-     *
-     * @param string $email
-     * @param string $password
-     * @return TokenResponse
-     * @throws GuzzleException
-     * @throws IdentityCoreException
-     * @throws IdentityErrorResponseException
-     */
-    public function password(string $email, string $password): TokenResponse
-    {
-        $response = $this->client->post($this->getTokenEndpointPath(), [
-            'grant_type' => 'password',
-            'client_id' => $this->params['client_id'],
-            'client_secret' => $this->params['client_secret'],
-            'scope' => implode(' ', $this->params['scopes']),
-            'username' => $email,
-            'password' => $password
-        ]);
-
-        return $this->handleGuzzleTokenResponse($response);
-    }
-
-    /**
-     * Initiates a token request using the client credentials grant.
-     *
-     * @return TokenResponse
-     * @throws GuzzleException
-     * @throws IdentityCoreException
-     * @throws IdentityErrorResponseException
-     */
-    public function clientCredentials(): TokenResponse
-    {
-        $response = $this->client->post($this->getTokenEndpointPath(), [
-            'grant_type' => 'client_credentials',
-            'client_id' => $this->params['client_id'],
-            'client_secret' => $this->params['client_secret'],
-            'scope' => implode(' ', $this->params['scopes'])
-        ]);
-
-        return $this->handleGuzzleTokenResponse($response);
     }
 
     /**
@@ -271,16 +212,147 @@ class Identity
             throw new IdentityArgumentException('The response should contain either a code, a token or an error.');
         }
 
-        /*
-         * saves the tokens locally before returning the response.
-         */
-        $this->saveToken('access', $tokenResponse->getAccessToken());
-        $this->saveToken('id', $tokenResponse->getIdToken());
-        $this->saveToken('refresh', $tokenResponse->getRefreshToken());
-
         return $tokenResponse;
     }
 
+    /* |-----------------------------------------------------------------------------------
+     * | GRANT METHODS
+     * |-----------------------------------------------------------------------------------
+     * | These are other options to retrieve access tokens, without using the authorization
+     * | flow.
+     */
+
+    /**
+     * Initiates a token request using the password grant.
+     *
+     * @param string $email
+     * @param string $password
+     * @return TokenResponse
+     * @throws GuzzleException
+     * @throws IdentityCoreException
+     * @throws IdentityErrorResponseException
+     */
+    public function authenticateWithPassword(string $email, string $password): TokenResponse
+    {
+        $response = $this->client->post($this->getTokenEndpointPath(), [
+            'grant_type' => 'password',
+            'client_id' => $this->params['client_id'],
+            'client_secret' => $this->params['client_secret'],
+            'scope' => implode(' ', $this->params['scopes']),
+            'username' => $email,
+            'password' => $password
+        ]);
+
+        return $this->handleGuzzleTokenResponse($response);
+    }
+
+    /**
+     * Initiates a token request using the client credentials grant.
+     *
+     * @return TokenResponse
+     * @throws GuzzleException
+     * @throws IdentityCoreException
+     * @throws IdentityErrorResponseException
+     */
+    public function authenticateWithClientCredentials(): TokenResponse
+    {
+        $response = $this->client->post($this->getTokenEndpointPath(), [
+            'grant_type' => 'client_credentials',
+            'client_id' => $this->params['client_id'],
+            'client_secret' => $this->params['client_secret'],
+            'scope' => implode(' ', $this->params['scopes'])
+        ]);
+
+        return $this->handleGuzzleTokenResponse($response);
+    }
+
+
+    /* |-----------------------------------------------------------------------------------
+     * | TOKEN METHODS
+     * |-----------------------------------------------------------------------------------
+     * | These methods are responsible for handling all the tokens, after any of the
+     * | authentications have been executed.
+     */
+
+    /**
+     * Gets the saved access token.
+     *
+     * @return Token|null
+     */
+    public function accessToken(): ?Token
+    {
+        /*
+         * Loads the access token from the local session
+         */
+        $token = $this->loadToken('access');
+
+        /*
+         * If nothing was found, lets just return that
+         */
+        if(!$token) { return null; }
+
+        /*
+         * Time to do some proactivity...
+         * If the token is expired, we will request for a new one if we have a refresh token
+         */
+        if($token->isExpired()) {
+            /*
+             * If we don't have a refresh token, there is not much to do...
+             * We will just return null, and clear the stored token.
+             */
+            if(!$this->refreshToken()) {
+                return null;
+            }
+        }
+
+        return $token;
+    }
+
+    /**
+     * Gets the saved ID token.
+     *
+     * @return Token|null
+     */
+    public function idToken(): ?Token
+    {
+        /*
+         * Load the token from the store
+         */
+        return $this->loadToken('id');
+    }
+
+    /**
+     * Gets the saved refresh token.
+     *
+     * @return Token|null
+     */
+    protected function refreshToken(): ?Token
+    {
+        return $this->loadToken('refresh');
+    }
+
+    protected function saveToken(string $type, string $token): void
+    {
+        if($this->params['persist_tokens']) {
+            $this->setSessionVariable($this->params['identifier'].'.'.$type, $token);
+        }
+    }
+
+    protected function loadToken(string $type): ?Token
+    {
+        if($this->params['persist_tokens']) {
+            return new Token($this->getSessionVariable($this->params['identifier'].'.'.$type));
+        }
+
+        return null;
+    }
+
+    /* |-----------------------------------------------------------------------------------
+     * | HELPER METHODS
+     * |-----------------------------------------------------------------------------------
+     * | These methods are used for supporting other methods, or to relay other classes to
+     * | the user.
+     */
     /**
      * Gets the api handler for this identity.
      *
@@ -329,6 +401,14 @@ class Identity
     protected function handleTokenResponse(string $accessToken, string $expiresIn, string $type = "Bearer", ?string $refreshToken = null, ?string $idToken = null): TokenResponse
     {
         try {
+
+            /*
+             * saves the tokens locally before returning the response.
+             */
+            $this->saveToken('access', $accessToken);
+            $this->saveToken('id', $idToken);
+            $this->saveToken('refresh', $refreshToken);
+
             return new TokenResponse(
                 $accessToken,
                 $expiresIn,
@@ -336,24 +416,9 @@ class Identity
                 $idToken,
                 $type
             );
+
         } catch (Exception $exception) {
             throw new IdentityCoreException($exception->getMessage(), $exception->getCode());
         }
-    }
-
-    protected function saveToken(string $type, string $token): void
-    {
-        if($this->params['persist_tokens']) {
-            $this->setSessionVariable($this->params['identifier'].'.'.$type, $token);
-        }
-    }
-
-    protected function loadToken(string $type): ?Token
-    {
-        if($this->params['persist_tokens']) {
-            return new Token($this->getSessionVariable($this->params['identifier'].'.'.$type));
-        }
-
-        return null;
     }
 }
