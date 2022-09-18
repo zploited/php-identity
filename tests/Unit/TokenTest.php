@@ -13,7 +13,7 @@ class TokenTest extends TestCase
     {
         parent::setUp();
 
-        $this->handler = new Token('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.2gSBz9EOsQRN9I-3iSxJoFt7NtgV6Rm0IL6a8CAwl3Q');
+        $this->handler = new Token('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNjYzNTEwNzc4LCJleHAiOjE2NjM1MTA3Nzl9.iPbZ5NQWKkkhmr4oFKs81-Qpu5Wo0WaV-npDvq1LTeg');
     }
 
     public function testCanAccessSubject()
@@ -24,5 +24,10 @@ class TokenTest extends TestCase
     public function testUnknownClaimReturnsNull()
     {
         $this->assertNull($this->handler->something);
+    }
+
+    public function testIsExpired()
+    {
+        $this->assertTrue($this->handler->isExpired());
     }
 }
