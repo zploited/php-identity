@@ -12,8 +12,6 @@ trait Show
      */
     public function show($id): object
     {
-        $response = $this->get($this->resource.'/'.$id);
-
-        return json_decode($response->getBody()->getContents());
+        return $this->get($this->resource.'/'.$id);
     }
 }

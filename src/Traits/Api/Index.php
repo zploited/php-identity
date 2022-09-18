@@ -11,8 +11,6 @@ trait Index
      */
     public function index(): object
     {
-        $response = $this->get($this->resource);
-
-        return json_decode($response->getBody()->getContents());
+        return $this->get($this->resource);
     }
 }
