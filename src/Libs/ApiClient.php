@@ -45,6 +45,11 @@ class ApiClient
         return new class($this->client, 'users') extends ApiEndpoint
         {
             use Index, Show, Store, Update;
+
+            public function __construct(Client $client, string $resource)
+            {
+                parent::__construct($client, $resource);
+            }
         };
     }
 
@@ -56,6 +61,11 @@ class ApiClient
         return new class($this->client, $resource) extends ApiEndpoint
         {
             use Index, Show, Store, Update;
+
+            public function __construct(Client $client, string $resource)
+            {
+                parent::__construct($client, $resource);
+            }
         };
     }
 }
