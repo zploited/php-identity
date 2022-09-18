@@ -11,6 +11,7 @@ use Psr\Http\Message\ResponseInterface;
 use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 use Zploited\Identity\Client\Exceptions\IdentityErrorResponseException;
+use Zploited\Identity\Client\Interfaces\TokenInterface;
 use Zploited\Identity\Client\Libs\ApiClient;
 use Zploited\Identity\Client\Traits\SessionState;
 use Zploited\Identity\Client\Traits\SessionStore;
@@ -266,6 +267,28 @@ class Identity
         return $this->handleGuzzleTokenResponse($response);
     }
 
+    /**
+     * Token request using a refresh token.
+     *
+     * @param TokenInterface $token
+     * @return TokenResponse
+     * @throws GuzzleException
+     * @throws IdentityCoreException
+     * @throws IdentityErrorResponseException
+     */
+    public function authenticateWithRefreshToken(TokenInterface $token): TokenResponse
+    {
+        $response = $this->client->post($this->getTokenEndpointPath(), [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $token->getJwtString(),
+            'client_id' => $this->params['client_id'],
+            'client_secret' => $this->params['client_secret'],
+            'scope' => implode(' ', $this->params['scopes'])
+        ]);
+
+        return $this->handleGuzzleTokenResponse($response);
+    }
+
 
     /* |-----------------------------------------------------------------------------------
      * | TOKEN METHODS
@@ -303,6 +326,10 @@ class Identity
             if(!$this->refreshToken()) {
                 return null;
             }
+
+            $response = $this->authenticateWithRefreshToken($this->refreshToken());
+
+            $token = $response->accessToken();
         }
 
         return $token;
