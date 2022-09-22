@@ -242,13 +242,15 @@ class Identity
      */
     public function authenticateWithPassword(string $email, string $password): TokenResponse
     {
-        $response = $this->client->post($this->getTokenEndpointPath(), [
-            'grant_type' => 'password',
-            'client_id' => $this->params['client_id'],
-            'client_secret' => $this->params['client_secret'],
-            'scope' => implode(' ', $this->params['scopes']),
-            'username' => $email,
-            'password' => $password
+        $response = $this->client->request('POST', $this->getTokenEndpointPath(), [ 'multipart' =>
+            [
+                ['name' => 'grant_type', 'contents' => 'password'],
+                ['name' => 'client_id', 'contents' => $this->params['client_id']],
+                ['name' => 'client_secret', 'contents' => $this->params['client_secret']],
+                ['name' => 'scope', 'contents' => implode(' ', $this->params['scopes'])],
+                ['name' => 'username', 'contents' => $email],
+                ['name' => 'password', 'contents' => $password]
+            ]
         ]);
 
         return $this->handleGuzzleTokenResponse($response);
@@ -264,11 +266,13 @@ class Identity
      */
     public function authenticateWithClientCredentials(): TokenResponse
     {
-        $response = $this->client->post($this->getTokenEndpointPath(), [
-            'grant_type' => 'client_credentials',
-            'client_id' => $this->params['client_id'],
-            'client_secret' => $this->params['client_secret'],
-            'scope' => implode(' ', $this->params['scopes'])
+        $response = $this->client->request('POST', $this->getTokenEndpointPath(), [ 'multipart' =>
+            [
+                ['name' => 'grant_type', 'contents' => 'client_credentials'],
+                ['name' => 'client_id', 'contents' => $this->params['client_id']],
+                ['name' => 'client_secret', 'contents' => $this->params['client_secret']],
+                ['name' => 'scope', 'contents' => implode(' ', $this->params['scopes'])]
+            ]
         ]);
 
         return $this->handleGuzzleTokenResponse($response);
@@ -285,12 +289,14 @@ class Identity
      */
     public function authenticateWithRefreshToken(TokenInterface $token): TokenResponse
     {
-        $response = $this->client->post($this->getTokenEndpointPath(), [
-            'grant_type' => 'refresh_token',
-            'refresh_token' => $token->getJwtString(),
-            'client_id' => $this->params['client_id'],
-            'client_secret' => $this->params['client_secret'],
-            'scope' => implode(' ', $this->params['scopes'])
+        $response = $this->client->request('POST', $this->getTokenEndpointPath(), [ 'multipart' =>
+            [
+                ['name' => 'grant_type', 'contents' => 'refresh_token'],
+                ['name' => 'client_id', 'contents' => $this->params['client_id']],
+                ['name' => 'client_secret', 'contents' => $this->params['client_secret']],
+                ['name' => 'scope', 'contents' => implode(' ', $this->params['scopes'])],
+                ['name' => 'refresh_token', 'contents' => $token->getJwtString()]
+            ]
         ]);
 
         return $this->handleGuzzleTokenResponse($response);
