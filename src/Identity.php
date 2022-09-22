@@ -371,10 +371,12 @@ class Identity
         return $this->loadToken('refresh');
     }
 
-    protected function saveToken(string $type, string $token): void
+    protected function saveToken(string $type, ?string $token): void
     {
         if($this->params['persist_tokens']) {
-            $this->setSessionVariable($this->params['identifier'].'.'.$type, $token);
+            if($token) {
+                $this->setSessionVariable($this->params['identifier'].'.'.$type, $token);
+            }
         }
     }
 
