@@ -56,6 +56,13 @@ class Identity
             throw new IdentityArgumentException("The client_id parameter is missing.");
         }
 
+        /*
+         * Sets Scopes default to an empty array
+         */
+        if(!isset($params['scopes'])) {
+            $params['scopes'] = [];
+        }
+
         if(!isset($params['persist_tokens'])) {
             $params['persist_tokens'] = true;
         }
