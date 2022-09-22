@@ -422,7 +422,7 @@ class Identity
             $responseData->access_token,
             $responseData->expires_in,
             $responseData->token_type,
-            $responseData->refresh_token,
+            (isset($responseData->refresh_token)) ? $responseData->refresh_token : null,
             (isset($responseData->id_token)) ? $responseData->id_token : null
         );
     }
