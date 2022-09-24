@@ -2,14 +2,14 @@
 
 namespace Zploited\Identity\Client\Traits\Api;
 
-trait Delete
+trait Destroy
 {
     /**
      * Deletes a specific entity
      * @param mixed $id
      * @return void
      */
-    public function delete($id): void
+    public function destroy($id): void
     {
         $this->delete($this->resource.'/'.$id);
     }

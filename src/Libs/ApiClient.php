@@ -4,6 +4,7 @@ namespace Zploited\Identity\Client\Libs;
 
 use GuzzleHttp\Client;
 use Zploited\Identity\Client\Interfaces\TokenInterface;
+use Zploited\Identity\Client\Traits\Api\Destroy;
 use Zploited\Identity\Client\Traits\Api\Index;
 use Zploited\Identity\Client\Traits\Api\Show;
 use Zploited\Identity\Client\Traits\Api\Store;
@@ -44,7 +45,7 @@ class ApiClient
          */
         return new class($this->client, 'users') extends ApiEndpoint
         {
-            use Index, Show, Store, Update;
+            use Index, Show, Store, Update, Destroy;
 
             public function __construct(Client $client, string $resource)
             {
@@ -60,7 +61,7 @@ class ApiClient
          */
         return new class($this->client, $resource) extends ApiEndpoint
         {
-            use Index, Show, Store, Update;
+            use Index, Show, Store, Update, Destroy;
 
             public function __construct(Client $client, string $resource)
             {
