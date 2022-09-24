@@ -46,7 +46,7 @@ abstract class ApiEndpoint
      */
     protected function post(string $path, array $data): void
     {
-        $this->client->post($path, $data);
+        $this->client->post($path, ['form_params' => $data]);
     }
 
     /**
@@ -71,6 +71,6 @@ abstract class ApiEndpoint
      */
     protected function patch(string $path, array $data)
     {
-        $this->client->patch($path, $data);
+        $this->client->patch($path, ['form_params' => $data]);
     }
 }
