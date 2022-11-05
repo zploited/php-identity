@@ -12,9 +12,9 @@ class Jwks
 
     protected string $url;
 
-    public function __construct(string $issuer)
+    public function __construct(string $issuer, string $protocol = 'https')
     {
-        $this->url = 'https://'.$issuer.'/oauth/jwks.json';
+        $this->url = $protocol.'://'.$issuer.'/oauth/jwks.json';
     }
 
     public function pem(string $kid): ?string

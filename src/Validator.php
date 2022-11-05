@@ -19,15 +19,17 @@ class Validator
 {
     protected string $issuer;
     protected ?string $publicKeyPath;
+    protected string $protocol;
 
     protected Jwks $jwks;
 
-    public function __construct(string $issuer, ?string $publicKeyPath = null)
+    public function __construct(string $issuer, ?string $publicKeyPath = null, string $protocol = 'https')
     {
         $this->issuer = $issuer;
         $this->publicKeyPath = $publicKeyPath;
+        $this->protocol = $protocol;
 
-        $this->jwks = new Jwks($issuer);
+        $this->jwks = new Jwks($issuer, $protocol);
     }
 
     /**
