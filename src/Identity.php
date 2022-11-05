@@ -25,7 +25,7 @@ class Identity
     use SessionStore, SessionState;
 
     /**
-     * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[], persist_tokens: bool }
+     * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[], persist_tokens: bool, protocol: string }
      */
     protected array $params;
 
@@ -63,8 +63,22 @@ class Identity
             $params['scopes'] = [];
         }
 
+        /*
+         * Set default value for token persistence
+         */
         if(!isset($params['persist_tokens'])) {
             $params['persist_tokens'] = true;
+        }
+
+        /*
+         * Sets default value to http protocol
+         */
+        if(!isset($params['protocol'])) {
+            $params['protocol'] = 'https';  // must be either http or https
+        } else {
+            if($params['protocol'] !== 'http' && $params['protocol'] !== 'https') {
+                throw new IdentityArgumentException('Invalid protocol.');
+            }
         }
 
         /*
@@ -96,7 +110,7 @@ class Identity
      */
     public function getAuthorizationPath(): string
     {
-        return 'https://' . $this->params['identifier'] . '/oauth/authorize';
+        return $this->params['protocol'] . '://' . $this->params['identifier'] . '/oauth/authorize';
     }
 
     /**
@@ -106,7 +120,7 @@ class Identity
      */
     public function getTokenEndpointPath(): string
     {
-        return 'https://' . $this->params['identifier'] . '/oauth/token';
+        return $this->params['protocol'] . '://' . $this->params['identifier'] . '/oauth/token';
     }
 
 
