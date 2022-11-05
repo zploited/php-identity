@@ -397,7 +397,9 @@ class Identity
     protected function loadToken(string $type): ?Token
     {
         if($this->params['persist_tokens']) {
-            return new Token($this->getSessionVariable($this->params['identifier'].'.'.$type));
+            return ($this->getSessionVariable($this->params['identifier'].'.'.$type)) ?
+                new Token($this->getSessionVariable($this->params['identifier'].'.'.$type)) :
+                null;
         }
 
         return null;
