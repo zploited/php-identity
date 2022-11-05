@@ -20,7 +20,7 @@ class ApiClient
      * @param string $identifier
      * @param TokenInterface $token
      */
-    public function __construct(string $identifier, TokenInterface $token)
+    public function __construct(string $baseUrl, TokenInterface $token)
     {
         $version = require(__DIR__.'/../version.php');
 
@@ -28,7 +28,7 @@ class ApiClient
          * Prepares the Guzzle client with the required headers and the base uri.
          */
         $this->client = new Client([
-            'base_uri' => 'https://'.$identifier.'/api/v1/',
+            'base_uri' => $baseUrl .'/api/v1/',
             'headers' => [
                 'accept' => 'application/json',
                 'cache-control' => 'no-store',

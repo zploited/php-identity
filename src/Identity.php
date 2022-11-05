@@ -416,7 +416,9 @@ class Identity
      */
     public function api(): ApiClient
     {
-        return new ApiClient($this->params['identifier'], $this->accessToken());
+        $baseUrl = $this->params['protocol'] . '://' . $this->params['identifier'];
+
+        return new ApiClient($baseUrl, $this->accessToken());
     }
 
     /**
