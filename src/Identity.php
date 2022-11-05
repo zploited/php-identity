@@ -91,7 +91,8 @@ class Identity
          */
         $this->client = new Client([
             'Cache-Control' => 'no-cache',
-            'Pragma' => 'no-cache'
+            'Pragma' => 'no-cache',
+            'Accept' => 'application/json'
         ]);
     }
 
@@ -195,14 +196,12 @@ class Identity
              * The client headers dictates that the result should not be cached, and accepts Json
              */
             try {
-                $response = $this->client->request('POST', $this->getTokenEndpointPath(), [ 'multipart' =>
-                    [
-                        ['name' => 'grant_type', 'contents' => 'authorization_code'],
-                        ['name' => 'client_id', 'contents' => $this->params['client_id']],
-                        ['name' => 'client_secret', 'contents' => $this->params['client_secret']],
-                        ['name' => 'redirect_uri', 'contents' => $this->params['redirect_uri']],
-                        ['name' => 'code', 'contents' => urldecode($_GET['code'])],
-                    ]
+                $response = $this->client->request('POST', $this->getTokenEndpointPath(), [
+                    'grant_type' => 'authorization_code',
+                    'client_id' => $this->params['client_id'],
+                    'client_secret' => $this->params['client_secret'],
+                    'redirect_uri' => $this->params['redirect_uri'],
+                    'code' => urldecode($_GET['code'])
                 ]);
             } catch (ClientException $clientException) {
                 $response = json_decode($clientException->getResponse()->getBody()->getContents());
