@@ -370,6 +370,7 @@ class Identity
      * Gets the saved ID token.
      *
      * @return IdToken|null
+     * @throws IdentityArgumentException
      */
     public function idToken(): ?IdToken
     {
@@ -394,6 +395,18 @@ class Identity
                 $this->setSessionVariable($this->params['identifier'].'.'.$type, $token);
             }
         }
+    }
+
+    public function removeAccessTokenFromStore(): void
+    {
+        $this->deleteSessionVariable($this->params['identifier'].'.access');
+    }
+
+    public function clearAllTokensFromStore(): void
+    {
+        $this->deleteSessionVariable($this->params['identifier'].'.access');
+        $this->deleteSessionVariable($this->params['identifier'].'.id');
+        $this->deleteSessionVariable($this->params['identifier'].'.refresh');
     }
 
     /**
