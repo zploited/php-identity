@@ -7,6 +7,15 @@ use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 
 class AccessToken extends JsonWebToken
 {
+    public string $jti;
+    public \DateTimeImmutable $nbf;
+    public string $sub;
+    public array $scopes;
+
+    protected string $kid;
+    protected string $alg;
+    protected string $typ;
+
     /**
      * @throws IdentityArgumentException
      */
@@ -16,12 +25,30 @@ class AccessToken extends JsonWebToken
         $parsed = parent::__construct($token);
 
         if(strtolower($parsed->headers()->get('typ')) !== 'at+jwt') {
-            throw new IdentityArgumentException('The provided token is not an access token');
+            throw new IdentityArgumentException('Not an access token');
         }
+
+        if(!$parsed->headers()->has('kid')) {
+            throw new IdentityArgumentException('Missing mandatory key ID');
+        }
+
+        $this->typ = $parsed->headers()->get('typ');
+        $this->kid = $parsed->headers()->get('kid');
+        $this->alg = $parsed->headers()->get('alg');
     }
 
-    public string $jti;
-    public \DateTimeImmutable $nbf;
-    public string $sub;
-    public array $scopes;
+    public function alg(): string
+    {
+        return $this->alg;
+    }
+
+    public function kid(): string
+    {
+        return $this->kid;
+    }
+
+    public function typ(): string
+    {
+        return $this->typ;
+    }
 }

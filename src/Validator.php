@@ -9,11 +9,11 @@ use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Validation\Constraint\IssuedBy;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
-use Lcobucci\JWT\Validation\Constraint\ValidAt;
+use Lcobucci\JWT\Validation\Constraint\StrictValidAt;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 use Zploited\Identity\Client\Exceptions\IdentityValidationException;
-use Zploited\Identity\Client\Interfaces\TokenInterface;
 use Zploited\Identity\Client\Libs\Jwks;
+use Zploited\Identity\Client\Models\AccessToken;
 
 class Validator
 {
@@ -35,7 +35,7 @@ class Validator
     /**
      * @throws IdentityCoreException
      */
-    public function validateToken(TokenInterface $token): bool
+    public function validateToken(AccessToken $token): bool
     {
         /*
          * Starting out by making the configuration, so we can parse the token.
@@ -44,7 +44,7 @@ class Validator
         try {
             $publicKey = ($this->publicKeyPath !== null) ?
                 InMemory::file($this->publicKeyPath) :
-                InMemory::plainText($this->jwks->pem($token->getHeader('kid')));
+                InMemory::plainText($this->jwks->pem($token->kid()));
 
         } catch (\Exception $ex) {
             throw new IdentityCoreException('Unable to retrieve the public key.');
@@ -58,7 +58,7 @@ class Validator
          */
         $allowedAlgorithms = ['rs256','hs256'];
         if(!in_array(
-            strtolower( $token->getHeader('alg') ),
+            strtolower( $token->alg() ),
             $allowedAlgorithms
         )) {
             throw new IdentityValidationException('The token algorithm is not allowed.');
@@ -68,15 +68,17 @@ class Validator
          * Then lets check if the token has at+jwt as TYP header.
          * This indicates that this is an access token...
          */
-        if(strtolower($token->getHeader('typ')) !== 'at+jwt') {
+        if(strtolower($token->typ()) !== 'at+jwt') {
             throw new IdentityValidationException('This is not an access token.');
         }
 
+
+        $parsed = $config->parser()->parse((string)$token);
         /*
          * Next, lets make sure the token is signed with our public key
          */
         if(!$config->validator()->validate(
-            $token->getJwtToken(),
+            $parsed,
             new SignedWith(
                 $config->signer(),
                 $config->verificationKey()
@@ -90,8 +92,8 @@ class Validator
          * Checking if the token is expired or used before it is valid (nbf)
          */
         if(!$config->validator()->validate(
-            $token->getJwtToken(),
-            new ValidAt(SystemClock::fromUTC())
+            $parsed,
+            new StrictValidAt(SystemClock::fromUTC())
         ))
         {
             throw new IdentityValidationException('The token has expired, or is not yet valid.');
@@ -101,7 +103,7 @@ class Validator
          * Checking if the token is issued by the correct issuer.
          */
         if(!$config->validator()->validate(
-            $token->getJwtToken(),
+            $parsed,
             new IssuedBy($this->issuer)
         )) {
             throw new IdentityValidationException('Incorrect issuing service.');

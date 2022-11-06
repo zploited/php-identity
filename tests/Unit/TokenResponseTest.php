@@ -9,7 +9,7 @@ use Zploited\Identity\Client\TokenResponse;
 class TokenResponseTest extends TestCase
 {
     protected TokenResponse $response;
-    protected $at = "eyJhbGciOiJIUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.M76x1clCZHjidPb8rApGOK5ibhu1wuvZDPEELQLJujg";
+    protected $at = "eyJhbGciOiJIUzI1NiIsInR5cCI6ImF0K2p3dCIsImtpZCI6ImFiY2RlZmcifQ.eyJzdWIiOiIxMjM0NTY3ODkwIn0.2mxU6cx8psFuvkAzzEIanfBaslyTS5xamgEp7HuP3jU";
 
     public function testAccessToken()
     {
