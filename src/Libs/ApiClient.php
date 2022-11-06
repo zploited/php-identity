@@ -3,7 +3,8 @@
 namespace Zploited\Identity\Client\Libs;
 
 use GuzzleHttp\Client;
-use Zploited\Identity\Client\Interfaces\TokenInterface;
+use Zploited\Identity\Client\Models\AccessToken;
+use Zploited\Identity\Client\Models\TokenInterface;
 use Zploited\Identity\Client\Traits\Api\Destroy;
 use Zploited\Identity\Client\Traits\Api\Index;
 use Zploited\Identity\Client\Traits\Api\Show;
@@ -17,10 +18,10 @@ class ApiClient
     /**
      * Class constructor
      *
-     * @param string $identifier
-     * @param TokenInterface $token
+     * @param string $baseUrl
+     * @param AccessToken $token
      */
-    public function __construct(string $baseUrl, TokenInterface $token)
+    public function __construct(string $baseUrl, AccessToken $token)
     {
         $version = require(__DIR__.'/../version.php');
 
@@ -32,7 +33,7 @@ class ApiClient
             'headers' => [
                 'accept' => 'application/json',
                 'cache-control' => 'no-store',
-                'authorization' => 'Bearer '.$token->getJwtString(),
+                'authorization' => 'Bearer '.(string)$token,
                 'user-agent' => 'identity/'.$version
             ]
         ]);

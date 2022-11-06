@@ -2,45 +2,50 @@
 
 namespace Zploited\Identity\Client\Tests\Unit;
 
+use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 use Zploited\Identity\Client\Tests\TestCase;
 use Zploited\Identity\Client\TokenResponse;
 
 class TokenResponseTest extends TestCase
 {
-    protected TokenResponse $token;
+    protected TokenResponse $response;
+    protected $at = "eyJhbGciOiJIUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.M76x1clCZHjidPb8rApGOK5ibhu1wuvZDPEELQLJujg";
 
-    public function testGetToken()
+    public function testAccessToken()
     {
-        $this->assertEquals('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.2gSBz9EOsQRN9I-3iSxJoFt7NtgV6Rm0IL6a8CAwl3Q', $this->token->getAccessToken());
+        $this->assertEquals($this->at, (string)$this->response->accessToken());
     }
 
     public function testExpiresAt()
     {
         $this->assertEquals(
             (new \DateTime())->add(new \DateInterval('PT3600S'))->getTimestamp(), // now + 3600 seconds (1 hour)
-            $this->token->expiresAt()->getTimestamp()
+            $this->response->expiresAt()->getTimestamp()
         );
     }
 
     public function testExpiresIn()
     {
-        $seconds = $this->token->expiresIn();
+        $seconds = $this->response->expiresIn();
 
         $this->assertIsInt($seconds);
-        $this->assertEquals(3600, $this->token->expiresIn());
+        $this->assertEquals(3600, $this->response->expiresIn());
     }
 
     public function testGetRefreshToken()
     {
-        $this->assertEquals('testrefresh', $this->token->getRefreshToken());
+        $this->assertEquals('testrefresh', (string)$this->response->refreshToken());
     }
 
+    /**
+     * @throws IdentityArgumentException
+     */
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->token = new TokenResponse(
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.2gSBz9EOsQRN9I-3iSxJoFt7NtgV6Rm0IL6a8CAwl3Q',
+        $this->response = new TokenResponse(
+            $this->at,
             3600,
             'testrefresh'
         );

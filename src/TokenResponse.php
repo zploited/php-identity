@@ -5,75 +5,45 @@ namespace Zploited\Identity\Client;
 use DateInterval;
 use DateTime;
 use Exception;
+use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
+use Zploited\Identity\Client\Models\AccessToken;
+use Zploited\Identity\Client\Models\IdToken;
+use Zploited\Identity\Client\Models\RefreshToken;
 
 class TokenResponse
 {
-    /**
-     * @var string token for granting api access.
-     */
-    protected string $accessToken;
-
-    /**
-     * @var DateTime when the access token expires.
-     */
+    protected AccessToken $accessToken;
     protected DateTime $expires;
-
-    /**
-     * @var string type of token
-     */
     protected string $type;
-
-    /**
-     * @var string|null token for retrieving a new access token, when the current expires.
-     */
-    protected ?string $refreshToken;
-
-    /**
-     * @var string|null stringified jwt token containing user information
-     */
-    protected ?string $idToken;
-
-    /**
-     * @var Token
-     */
-    protected Token $accessTokenHandler;
-
-    /**
-     * @var Token|null
-     */
-    protected ?Token $idTokenHandler;
+    protected ?RefreshToken $refreshToken;
+    protected ?IdToken $idToken;
 
     /**
      * Class constructor.
      *
      * @param string $accessToken access token.
      * @param int $expiresIn time in seconds until the access token is no longer valid.
-     * @param string $type type of token. this is typically always a bearer token.
      * @param string|null $refreshToken token for automatically getting a new access token, without having to authorize again.
      * @param string|null $idToken id token is provided if openid scope is being used, and is a jwt containing information about the user.
+     * @param string $type type of token. this is typically always a bearer token.
+     * @throws IdentityArgumentException
      * @throws Exception
      */
     public function __construct(string $accessToken, int $expiresIn, ?string $refreshToken = null, ?string $idToken = null, string $type = "Bearer")
     {
-        /*
-         * Saves the parameters locally for later
-         */
-        $this->accessToken = $accessToken;
+        $this->accessToken = new AccessToken($accessToken);
+        $this->idToken = ($idToken !== null) ? new IdToken($idToken) : null;
+        $this->refreshToken = ($refreshToken !== null) ? new RefreshToken($refreshToken) : null;
         $this->expires = (new DateTime())->add(new DateInterval("PT".$expiresIn."S"));
-        $this->refreshToken = $refreshToken;
-        $this->idToken = $idToken;
         $this->type = $type;
-
-        $this->accessTokenHandler = new Token($accessToken);
-        $this->idTokenHandler = ($idToken) ? new Token($idToken) : null;
     }
 
     /**
      * Gets the access token.
      *
-     * @return string
+     * @return AccessToken
      */
-    public function getAccessToken(): string
+    public function accessToken(): AccessToken
     {
         return $this->accessToken;
     }
@@ -102,9 +72,9 @@ class TokenResponse
     /**
      * Gets the saved refresh token
      *
-     * @return string|null
+     * @return RefreshToken|null
      */
-    public function getRefreshToken(): ?string
+    public function refreshToken(): ?RefreshToken
     {
         return $this->refreshToken;
     }
@@ -112,20 +82,10 @@ class TokenResponse
     /**
      * Gets the id token.
      *
-     * @return string|null
+     * @return IdToken|null
      */
-    public function getIdToken(): ?string
+    public function idToken(): ?IdToken
     {
         return $this->idToken;
-    }
-
-    public function accessToken(): Token
-    {
-        return $this->accessTokenHandler;
-    }
-
-    public function idToken(): ?Token
-    {
-        return $this->idTokenHandler;
     }
 }

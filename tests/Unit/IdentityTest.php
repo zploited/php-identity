@@ -2,6 +2,7 @@
 
 namespace Zploited\Identity\Client\Tests\Unit;
 
+use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 use Zploited\Identity\Client\Identity;
 use Zploited\Identity\Client\Tests\TestCase;
 
@@ -9,6 +10,9 @@ class IdentityTest extends TestCase
 {
     protected Identity $client;
 
+    /**
+     * @throws IdentityArgumentException
+     */
     protected function setUp(): void
     {
         parent::setUp();

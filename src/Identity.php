@@ -11,8 +11,11 @@ use Psr\Http\Message\ResponseInterface;
 use Zploited\Identity\Client\Exceptions\IdentityArgumentException;
 use Zploited\Identity\Client\Exceptions\IdentityCoreException;
 use Zploited\Identity\Client\Exceptions\IdentityErrorResponseException;
-use Zploited\Identity\Client\Interfaces\TokenInterface;
 use Zploited\Identity\Client\Libs\ApiClient;
+use Zploited\Identity\Client\Models\AccessToken;
+use Zploited\Identity\Client\Models\IdToken;
+use Zploited\Identity\Client\Models\RefreshToken;
+use Zploited\Identity\Client\Models\TokenInterface;
 use Zploited\Identity\Client\Traits\SessionState;
 use Zploited\Identity\Client\Traits\SessionStore;
 
@@ -327,9 +330,10 @@ class Identity
     /**
      * Gets the saved access token.
      *
-     * @return Token|null
+     * @return AccessToken|null
+     * @throws IdentityArgumentException
      */
-    public function accessToken(): ?Token
+    public function accessToken(): ?AccessToken
     {
         /*
          * Loads the access token from the local session
@@ -365,22 +369,20 @@ class Identity
     /**
      * Gets the saved ID token.
      *
-     * @return Token|null
+     * @return IdToken|null
      */
-    public function idToken(): ?Token
+    public function idToken(): ?IdToken
     {
-        /*
-         * Load the token from the store
-         */
         return $this->loadToken('id');
     }
 
     /**
      * Gets the saved refresh token.
      *
-     * @return Token|null
+     * @return RefreshToken|null
+     * @throws IdentityArgumentException
      */
-    protected function refreshToken(): ?Token
+    protected function refreshToken(): ?RefreshToken
     {
         return $this->loadToken('refresh');
     }
@@ -394,12 +396,24 @@ class Identity
         }
     }
 
-    protected function loadToken(string $type): ?Token
+    /**
+     * @param string $type
+     * @return IdToken|RefreshToken|AccessToken|TokenInterface|null
+     * @throws IdentityArgumentException
+     */
+    protected function loadToken(string $type): ?TokenInterface
     {
-        if($this->params['persist_tokens']) {
-            return ($this->getSessionVariable($this->params['identifier'].'.'.$type)) ?
-                new Token($this->getSessionVariable($this->params['identifier'].'.'.$type)) :
-                null;
+        $identifier = $this->params['identifier'].'.'.$type;
+
+        if($this->params['persist_tokens'] && $this->getSessionVariable($identifier)) {
+            switch ($type) {
+                case 'id':
+                    return new IdToken($this->getSessionVariable($identifier));
+                case 'refresh':
+                    return new RefreshToken($this->getSessionVariable($identifier));
+                case 'access':
+                    return new AccessToken($this->getSessionVariable($identifier));
+            }
         }
 
         return null;
@@ -415,6 +429,7 @@ class Identity
      * Gets the api handler for this identity.
      *
      * @return ApiClient
+     * @throws IdentityArgumentException
      */
     public function api(): ApiClient
     {
