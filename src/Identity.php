@@ -16,7 +16,6 @@ use Zploited\Identity\Client\Models\AccessToken;
 use Zploited\Identity\Client\Models\IdToken;
 use Zploited\Identity\Client\Models\RefreshToken;
 use Zploited\Identity\Client\Models\TokenInterface;
-use Zploited\Identity\Client\Traits\SessionState;
 use Zploited\Identity\Client\Traits\SessionStore;
 
 /**
@@ -25,10 +24,10 @@ use Zploited\Identity\Client\Traits\SessionStore;
  */
 class Identity
 {
-    use SessionStore, SessionState;
+    use SessionStore;
 
     /**
-     * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[], persist_tokens: bool, protocol: string }
+     * @var array{ identifier: string, client_id: string, client_secret: string, redirect_uri: ?string, scopes: string[], persist_tokens: bool, protocol: string, state: ?string }
      */
     protected array $params;
 
@@ -82,6 +81,13 @@ class Identity
             if($params['protocol'] !== 'http' && $params['protocol'] !== 'https') {
                 throw new IdentityArgumentException('Invalid protocol.');
             }
+        }
+
+        /*
+         * Sets state to null if none is set.
+         */
+        if(!isset($params['state'])) {
+            $params['state'] = null;
         }
 
         /*
@@ -148,7 +154,7 @@ class Identity
             'client_id' => $this->params['client_id'],
             'redirect_uri' => $this->params['redirect_uri'],
             'scope' => implode(' ', $this->params['scopes']),
-            'state' => (method_exists($this, 'setState')) ? $this->setState() : null
+            'state' => $this->params['state']
         ];
 
         return $this->getAuthorizationPath() .'?'. http_build_query($queryParams);
@@ -183,8 +189,8 @@ class Identity
          * Checking if state is provided, and if it is, it has to match the one we sent with it
          * If it doesn't, it should be rejected, since the response must come from another source...
          */
-        if(isset($_GET['state']) && $_GET['state'] !== $this->getState()) {
-            throw new IdentityArgumentException('The state provided does not match our own state.');
+        if(isset($_GET['state']) && $_GET['state'] !== $this->params['state']) {
+            throw new IdentityArgumentException('Invalid state.');
         }
 
         /*
