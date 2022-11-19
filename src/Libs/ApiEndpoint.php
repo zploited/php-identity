@@ -3,6 +3,7 @@
 namespace Zploited\Identity\Client\Libs;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 
 abstract class ApiEndpoint
@@ -41,12 +42,22 @@ abstract class ApiEndpoint
      *
      * @param string $path
      * @param array $data
+     * @param callable|null $callback
      * @return void
-     * @throws GuzzleException
      */
-    protected function post(string $path, array $data): void
+    protected function post(string $path, array $data, callable $callback = null): void
     {
-        $this->client->post($path, ['form_params' => $data]);
+        try {
+            $response = $this->client->post($path, ['form_params' => $data]);
+        } catch (ClientException $clientException) {
+            $response = $clientException->getResponse();
+        } catch (\Exception|GuzzleException $exception) {
+            $response = null;
+        }
+
+        if($callback !== null) {
+            $callback($response);
+        }
     }
 
     /**
