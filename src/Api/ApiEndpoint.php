@@ -1,9 +1,8 @@
 <?php
 
-namespace Zploited\Identity\Client\Libs;
+namespace Zploited\Identity\Client\Api;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 
 abstract class ApiEndpoint
@@ -27,14 +26,20 @@ abstract class ApiEndpoint
      * Requests api path using a GET request.
      *
      * @param string $path
+     * @param callable|null $callback
      * @return mixed
      * @throws GuzzleException
      */
-    protected function get(string $path)
+    protected function get(string $path, callable $callback = null): void
     {
         $response =  $this->client->get($path);
 
-        return json_decode($response->getBody()->getContents());
+        if($callback !== null) {
+            $callback(
+                json_decode($response->getBody()->getContents()),
+                $response
+            );
+        }
     }
 
     /**
@@ -44,16 +49,11 @@ abstract class ApiEndpoint
      * @param array $data
      * @param callable|null $callback
      * @return void
+     * @throws GuzzleException
      */
     protected function post(string $path, array $data, callable $callback = null): void
     {
-        try {
-            $response = $this->client->post($path, ['form_params' => $data]);
-        } catch (ClientException $clientException) {
-            $response = $clientException->getResponse();
-        } catch (\Exception|GuzzleException $exception) {
-            $response = null;
-        }
+        $response = $this->client->post($path, ['form_params' => $data]);
 
         if($callback !== null) {
             $callback($response);
@@ -64,12 +64,17 @@ abstract class ApiEndpoint
      * Requests api path using a DELETE request.
      *
      * @param string $path
+     * @param callable|null $callback
      * @return void
      * @throws GuzzleException
      */
-    protected function delete(string $path): void
+    protected function delete(string $path, callable $callback = null): void
     {
-        $this->client->delete($path);
+        $response = $this->client->delete($path);
+
+        if($callback !== null) {
+            $callback($response);
+        }
     }
 
     /**
@@ -77,11 +82,16 @@ abstract class ApiEndpoint
      *
      * @param string $path
      * @param array $data
+     * @param callable|null $callback
      * @return void
      * @throws GuzzleException
      */
-    protected function patch(string $path, array $data)
+    protected function patch(string $path, array $data, callable $callback = null): void
     {
-        $this->client->patch($path, ['form_params' => $data]);
+        $response = $this->client->patch($path, ['form_params' => $data]);
+
+        if($callback !== null) {
+            $callback($response);
+        }
     }
 }
