@@ -36,9 +36,9 @@ class ApiClient
 
     /**
      * Gets api client for users resource.
-     * @return ResourceApiClient
+     * @return Resource
      */
-    public function users(): ResourceApiClient
+    public function users(): Resource
     {
         return $this->resource('users');
     }
@@ -46,11 +46,11 @@ class ApiClient
     /**
      * Gets api client for a custom resource.
      * @param string $resource
-     * @return ResourceApiClient
+     * @return Resource
      */
-    public function resource(string $resource): ResourceApiClient
+    public function resource(string $resource): Resource
     {
-        return new ResourceApiClient($this->client, $resource);
+        return new Resource($this->client, $resource);
     }
 
     /**
