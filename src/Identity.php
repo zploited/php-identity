@@ -304,13 +304,13 @@ class Identity
     /**
      * Token request using a refresh token.
      *
-     * @param TokenInterface $token
+     * @param RefreshToken $token
      * @return TokenResponse
      * @throws GuzzleException
      * @throws IdentityCoreException
      * @throws IdentityErrorResponseException
      */
-    public function authenticateWithRefreshToken(TokenInterface $token): TokenResponse
+    public function authenticateWithRefreshToken(RefreshToken $token): TokenResponse
     {
         $response = $this->client->request('POST', $this->getTokenEndpointPath(), [ 'multipart' =>
             [
@@ -318,7 +318,7 @@ class Identity
                 ['name' => 'client_id', 'contents' => $this->params['client_id']],
                 ['name' => 'client_secret', 'contents' => $this->params['client_secret']],
                 ['name' => 'scope', 'contents' => implode(' ', $this->params['scopes'])],
-                ['name' => 'refresh_token', 'contents' => $token->getJwtString()]
+                ['name' => 'refresh_token', 'contents' => (string)$token]
             ]
         ]);
 
