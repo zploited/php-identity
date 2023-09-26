@@ -4,6 +4,7 @@ namespace Zploited\Identity\Client\Api;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 
 class Resource
 {
@@ -20,12 +21,12 @@ class Resource
      * Gets a list of all stored entities.
      *
      * @param callable|null $callback
-     * @return void
+     * @return mixed|null Return value of provided callback.
      * @throws GuzzleException
      */
-    public function index(callable $callback = null): void
+    public function index(callable $callback = null): mixed
     {
-        $this->get($this->resource, $callback);
+        return $this->get($this->resource, $callback);
     }
 
     /**
@@ -33,12 +34,12 @@ class Resource
      *
      * @param $id
      * @param callable $callback
-     * @return void
+     * @return mixed|null Return value of provided callback.
      * @throws GuzzleException
      */
-    public function show($id, callable $callback): void
+    public function show($id, callable $callback): mixed
     {
-        $this->get($this->resource.'/'.$id, $callback);
+        return $this->get($this->resource.'/'.$id, $callback);
     }
 
     /**
@@ -46,12 +47,12 @@ class Resource
      *
      * @param array $params The data being saved to the new entity.
      * @param callable|null $callback
-     * @return void
+     * @return mixed|null Return value of provided callback
      * @throws GuzzleException
      */
-    public function store(array $params, callable $callback = null): void
+    public function store(array $params, callable $callback = null): mixed
     {
-        $this->post($this->resource, $params, $callback);
+        return $this->post($this->resource, $params, $callback);
     }
 
     /**
@@ -60,12 +61,12 @@ class Resource
      * @param mixed $id resource identifier
      * @param array $data data being updated
      * @param callable|null $callback
-     * @return void
+     * @return mixed|null Return value of provided callback
      * @throws GuzzleException
      */
-    public function update($id, array $data, callable $callback = null): void
+    public function update($id, array $data, callable $callback = null): mixed
     {
-        $this->patch($this->resource.'/'.$id, $data, $callback);
+        return $this->patch($this->resource.'/'.$id, $data, $callback);
     }
 
     /**
@@ -73,32 +74,27 @@ class Resource
      *
      * @param mixed $id
      * @param callable|null $callback
-     * @return void
+     * @return mixed|null Return value of provided callback
      * @throws GuzzleException
      */
-    public function destroy($id, callable $callback = null): void
+    public function destroy($id, callable $callback = null): mixed
     {
-        $this->delete($this->resource.'/'.$id, $callback);
+        return $this->delete($this->resource.'/'.$id, $callback);
     }
 
     /**
-     * Requests api path using a GET request.
+     * Requests api path using a GET request, and returns the return parameter of the provided callable.
      *
      * @param string $path
      * @param callable|null $callback
-     * @return mixed
+     * @return mixed|null
      * @throws GuzzleException
      */
-    protected function get(string $path, callable $callback = null): void
+    protected function get(string $path, callable $callback = null): mixed
     {
         $response =  $this->client->get($path);
 
-        if($callback !== null) {
-            $callback(
-                json_decode($response->getBody()->getContents()),
-                $response
-            );
-        }
+        return $this->returnCallbackWithResponse($response, $callback);
     }
 
     /**
@@ -107,16 +103,14 @@ class Resource
      * @param string $path
      * @param array $data
      * @param callable|null $callback
-     * @return void
+     * @return mixed|null
      * @throws GuzzleException
      */
-    protected function post(string $path, array $data, callable $callback = null): void
+    protected function post(string $path, array $data, callable $callback = null): mixed
     {
         $response = $this->client->post($path, ['form_params' => $data]);
 
-        if($callback !== null) {
-            $callback($response);
-        }
+        return $this->returnCallbackWithResponse($response, $callback);
     }
 
     /**
@@ -124,16 +118,14 @@ class Resource
      *
      * @param string $path
      * @param callable|null $callback
-     * @return void
+     * @return mixed|null
      * @throws GuzzleException
      */
-    protected function delete(string $path, callable $callback = null): void
+    protected function delete(string $path, callable $callback = null): mixed
     {
         $response = $this->client->delete($path);
 
-        if($callback !== null) {
-            $callback($response);
-        }
+        return $this->returnCallbackWithResponse($response, $callback);
     }
 
     /**
@@ -142,15 +134,27 @@ class Resource
      * @param string $path
      * @param array $data
      * @param callable|null $callback
-     * @return void
+     * @return mixed|null
      * @throws GuzzleException
      */
-    protected function patch(string $path, array $data, callable $callback = null): void
+    protected function patch(string $path, array $data, callable $callback = null): mixed
     {
         $response = $this->client->patch($path, ['form_params' => $data]);
 
-        if($callback !== null) {
-            $callback($response);
-        }
+        return $this->returnCallbackWithResponse($response, $callback);
+    }
+
+    /**
+     * Returns whatever the callback returns, providing the json object of the response, and the raw response as parameters.
+     *
+     * @param ResponseInterface $response
+     * @param callable|null $callback
+     * @return mixed|null
+     */
+    protected function returnCallbackWithResponse(ResponseInterface $response, callable $callback = null): mixed
+    {
+        return $callback !== null ?
+            $callback(json_decode($response->getBody()->getContents()), $response) :
+            null;
     }
 }
